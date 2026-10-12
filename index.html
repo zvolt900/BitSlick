@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codebase Doctor — Project-Wide Code Health & Organizer</title>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="top-nav">
+      <div class="nav-brand-group">
+        <div class="brand">
+          <span class="brand-name">Codebase Doctor</span>
+          <span class="brand-badge">blow-dryr core v2.1</span>
+        </div>
+
+        <!-- Mode Switcher Tabs -->
+        <nav class="mode-nav" aria-label="Tool mode">
+          <button class="mode-nav-btn active" id="btnModeDoctor" onclick="switchToolMode('doctor')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>Project Doctor</span>
+          </button>
+          <button class="mode-nav-btn" id="btnModeCleaner" onclick="switchToolMode('cleaner')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Snippet Cleaner</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Header Controls -->
+      <div class="nav-controls-group">
+        <!-- Beginner Mode Toggle -->
+        <label class="toggle-control" title="Toggle simplified explanations and learning tips">
+          <input type="checkbox" id="beginnerModeToggle" onchange="toggleBeginnerMode(this.checked)" checked />
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Beginner Mode</span>
+        </label>
+
+        <!-- Project Doctor Actions (Consolidated Dropdown Architecture) -->
+        <div class="doctor-actions" id="doctorHeaderActions">
+          <!-- Demos Dropdown -->
+          <div class="dropdown-wrapper" id="dropdownDemos">
+            <button class="btn-subtle" onclick="toggleDropdown('dropdownDemos')" title="Load pre-built benchmark projects">
+              <span>Demos ▾</span>
+            </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" onclick="loadDemoProject('issues'); closeAllDropdowns();">
+                <span>Issue-Filled Fullstack (6 files)</span>
+              </button>
+              <button class="dropdown-item" onclick="loadDemoProject('clean'); closeAllDropdowns();">
+                <span>Clean Benchmark (100% Health)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Upload Dropdown -->
+          <div class="dropdown-wrapper" id="dropdownUpload">
+            <button class="btn-subtle" onclick="toggleDropdown('dropdownUpload')" title="Upload project directory or files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span>Upload ▾</span>
+            </button>
+            <div class="dropdown-menu">
+              <label class="dropdown-item" style="cursor:pointer;">
+                <span>📁 Upload Folder</span>
+                <input type="file" id="folderUploadInput" webkitdirectory directory multiple style="display:none;" onchange="handleFolderUpload(event); closeAllDropdowns();" />
+              </label>
+              <label class="dropdown-item" style="cursor:pointer;">
+                <span>📄 Upload Multiple Files</span>
+                <input type="file" id="filesUploadInput" multiple style="display:none;" onchange="handleFilesUpload(event); closeAllDropdowns();" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Export Dropdown -->
+          <div class="dropdown-wrapper" id="dropdownExport">
+            <button class="btn-subtle" onclick="toggleDropdown('dropdownExport')" title="Export reports or download project files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export ▾</span>
+            </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" onclick="exportHtmlReport(); closeAllDropdowns();">
+                <span>📊 Export HTML Audit Report</span>
+              </button>
+              <button class="dropdown-item" onclick="exportJsonReport(); closeAllDropdowns();">
+                <span>📋 Export JSON Machine Schema</span>
+              </button>
+              <button class="dropdown-item" onclick="exportReportMarkdown(); closeAllDropdowns();">
+                <span>📝 Export Markdown Summary</span>
+              </button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick="exportModifiedProject(); closeAllDropdowns();">
+                <span>📦 Download Fixed Project (ZIP)</span>
+              </button>
+              <button class="dropdown-item" onclick="saveChangesToDisk(); closeAllDropdowns();">
+                <span>💾 Save Direct to Local Disk</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Compare Scans Button -->
+          <button class="btn-subtle" onclick="openScanCompareModal()" title="Compare scan history and track issue deltas">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+            <span>Compare Scans</span>
+          </button>
+
+          <!-- Plugin Checklist Button -->
+          <button class="btn-subtle" onclick="openPluginChecklistModal()" title="View 8-point plugin readiness checklist & architecture">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Plugin (8/8)</span>
+          </button>
+
+          <!-- Undo Last Fix Button (Persistent across reloads) -->
+          <button class="btn-subtle" id="undoFixBtn" onclick="undoLastFix()" title="Undo last applied fix and restore snapshot">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            <span>Undo (<span id="undoCountBadge">0</span>)</span>
+          </button>
+
+          <button class="btn-primary" onclick="rescanCurrentProject()" title="Re-scan and compare progress (Incremental)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>Re-Scan</span>
+          </button>
+        </div>
+
+        <!-- Snippet Cleaner Presets (Visible in Cleaner Mode) -->
+        <div class="cleaner-actions hidden" id="cleanerHeaderActions">
+          <span class="preset-label">Samples:</span>
+          <button class="preset-chip" onclick="loadSample('js_messy')">JavaScript</button>
+          <button class="preset-chip" onclick="loadSample('py_messy')">Python</button>
+          <button class="preset-chip" onclick="loadSample('cpp_messy')">C++</button>
+          <button class="preset-chip error-chip" onclick="loadSample('syntax_error')">Syntax Error Demo</button>
+          <button class="btn-ghost" onclick="resetWorkspace()">Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ======================================================================
+         MODE 1: CODEBASE DOCTOR (PROJECT-WIDE ANALYSIS & HEALTH SUITE)
+         ====================================================================== -->
+    <main id="doctorModeSection" class="doctor-container">
+      <!-- Project Summary Banner -->
+      <section class="health-overview-card">
+        <div class="health-score-dial" onclick="openScoreFormulaModal()" title="Click to view exact transparent scoring breakdown">
+          <div class="score-circle">
+            <span id="healthScoreValue" class="score-number">--</span>
+            <span class="score-denom">/ 100</span>
+          </div>
+          <div class="score-meta">
+            <span id="healthGradeBadge" class="grade-badge">Awaiting Scan</span>
+            <button class="score-formula-btn" onclick="event.stopPropagation(); openScoreFormulaModal()" title="View transparent scoring formula">
+              Scoring Formula ⓘ
+            </button>
+          </div>
+        </div>
+
+        <!-- Project Metrics Summary -->
+        <div class="project-metrics-grid">
+          <div class="metric-box">
+            <span class="metric-title">Project Name</span>
+            <span id="projectTitle" class="metric-value">No Project Loaded</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-title">Inspected Files</span>
+            <span id="metricFileCount" class="metric-value">0</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-title">Total Lines of Code</span>
+            <span id="metricLoc" class="metric-value">0</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-title">Duplicate Code</span>
+            <span id="metricDuplication" class="metric-value">0%</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-title">Dependencies & Imports</span>
+            <span id="metricImportsCount" class="metric-value">0 resolved</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-title">Scan Mode</span>
+            <span id="metricScanMode" class="metric-value">Full Scan</span>
+          </div>
+        </div>
+
+        <!-- Severity Counters -->
+        <div class="severity-counters-row">
+          <div class="sev-pill sev-critical" id="pillSevCritical" onclick="toggleSeverityFilter('Critical')" title="Click to toggle Critical filter">
+            <span class="sev-count" id="countCritical">0</span> Critical
+          </div>
+          <div class="sev-pill sev-high" id="pillSevHigh" onclick="toggleSeverityFilter('High')" title="Click to toggle High filter">
+            <span class="sev-count" id="countHigh">0</span> High
+          </div>
+          <div class="sev-pill sev-medium" id="pillSevMedium" onclick="toggleSeverityFilter('Medium')" title="Click to toggle Medium filter">
+            <span class="sev-count" id="countMedium">0</span> Medium
+          </div>
+          <div class="sev-pill sev-low" id="pillSevLow" onclick="toggleSeverityFilter('Low')" title="Click to toggle Low filter">
+            <span class="sev-count" id="countLow">0</span> Low
+          </div>
+        </div>
+      </section>
+
+      <!-- Language Distribution Meter -->
+      <section class="lang-meter-bar-container">
+        <div class="lang-meter-header">
+          <span class="meter-title">Language Distribution</span>
+          <span id="langBreakdownText" class="meter-desc">No languages detected</span>
+        </div>
+        <div class="lang-meter-track" id="langMeterTrack"></div>
+      </section>
+
+      <!-- Doctor Workspace Grid (Left: File Tree & Dependency Graph, Right: Issues & Fixes) -->
+      <div class="doctor-workspace-grid">
+        <!-- Left: Project Structure & File Explorer -->
+        <aside class="project-tree-panel">
+          <div class="panel-top-bar">
+            <span class="panel-heading">Project Files</span>
+            <span id="treeFileCountBadge" class="panel-count-badge">0 files</span>
+          </div>
+          <div id="fileTreeContainer" class="tree-list">
+            <div class="empty-tree-msg">No project loaded. Click <strong>Demo Project</strong> or <strong>Upload Folder</strong> above.</div>
+          </div>
+
+          <!-- Dependency Overview Button -->
+          <div class="dep-overview-bar">
+            <button class="btn-subtle-sm w-full" onclick="openDepGraphModal()">
+              <span>View Dependency Graph</span>
+            </button>
+          </div>
+
+          <!-- Scan Progress / Tracking Summary -->
+          <div class="tracking-summary-card">
+            <span class="track-header">Issue Status Tracker</span>
+            <div class="track-stats-row">
+              <span id="trackOpenCount">0 Open</span>
+              <span id="trackFixedCount">0 Fixed</span>
+              <span id="trackIgnoredCount">0 Ignored</span>
+            </div>
+            <div id="scanComparisonNote" class="comparison-note">Load or scan a project to begin tracking health over time.</div>
+          </div>
+        </aside>
+
+        <!-- Right: Filterable Issues & Findings List -->
+        <section class="issues-panel">
+          <!-- Filter Toolbar -->
+          <div class="filter-toolbar">
+            <div class="filter-group" style="flex:1; flex-wrap:wrap;">
+              <input type="text" id="filterSearch" class="filter-search-input" placeholder="Search finding, file, rule ID, snippet..." oninput="applyFilters()" />
+
+              <select id="filterSeverity" class="filter-select" onchange="applyFilters()">
+                <option value="All">All Severities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+
+              <select id="filterCategory" class="filter-select" onchange="applyFilters()">
+                <option value="All">All Categories</option>
+                <option value="Security">Security & Secrets</option>
+                <option value="Bug Risk">Bug Risk</option>
+                <option value="Architecture">Architecture & Duplication</option>
+                <option value="Dependencies">Dependencies & Imports</option>
+                <option value="Complexity">Complexity & Nesting</option>
+                <option value="Formatting">Formatting & Style</option>
+                <option value="Documentation">Documentation</option>
+              </select>
+
+              <select id="filterFile" class="filter-select" onchange="applyFilters()">
+                <option value="All">All Files</option>
+              </select>
+
+              <select id="filterStatus" class="filter-select" onchange="applyFilters()">
+                <option value="All">All Statuses</option>
+                <option value="Open">Open</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Ignored">Ignored</option>
+              </select>
+            </div>
+
+            <div class="filter-actions">
+              <button class="btn-subtle-sm" onclick="exportHtmlReport()" title="Export self-contained HTML audit report">HTML</button>
+              <button class="btn-subtle-sm" onclick="exportJsonReport()" title="Export machine-readable JSON audit">JSON</button>
+              <button class="btn-subtle-sm" onclick="exportReportMarkdown()" title="Export structured markdown report">Markdown</button>
+            </div>
+          </div>
+
+          <!-- Active Issues List -->
+          <div class="issues-list" id="issuesListContainer">
+            <div class="empty-issues-card">
+              <h3>Ready to Inspect</h3>
+              <p>Click <strong>Demo Project</strong> above to run an instant analysis on a realistic multi-file codebase, or upload your own project folder.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ======================================================================
+         MODE 2: SNIPPET CLEANER (PRESERVED ORIGINAL BLOW-DRYR WORKFLOW)
+         ====================================================================== -->
+    <main id="cleanerModeSection" class="cleaner-container hidden">
+      <div class="cleaner-wrapper">
+        <!-- Blend-In Hero -->
+        <section class="hero">
+          <h1 class="hero-heading">blow-dryr</h1>
+          <p class="hero-subtext">Blow away the mess, keep the logic.</p>
+        </section>
+
+        <!-- Input Workspace -->
+        <section class="workspace">
+          <div class="input-card">
+            <div class="tabs-bar">
+              <div class="tab active">Text Input</div>
+              <div class="tab disabled" title="Handled via Project Doctor">Folder Upload (Use Project Doctor)</div>
+            </div>
+
+            <div class="editor-container">
+              <div class="editor-meta">
+                <span id="detectedLangTag" class="lang-tag">Auto-detecting language...</span>
+                <span id="counterStats" class="counter-stats">0 lines · 0 characters</span>
+              </div>
+              <textarea id="codeInput" class="code-editor" placeholder="// Paste unorganized code here..." spellcheck="false"></textarea>
+            </div>
+
+            <div class="input-footer">
+              <button class="btn-subtle" onclick="clearInput()">Clear</button>
+              <button id="formatBtn" class="btn-primary" onclick="initiateFormat()">Format Code</button>
+            </div>
+          </div>
+
+          <!-- Syntax Error Gatekeeper Banner -->
+          <div id="errorBanner" class="alert-card hidden">
+            <div class="alert-header">
+              <span class="alert-badge">Syntax Error</span>
+              <span class="alert-title">Cleaning Loop Broken — Zero Modifications Made</span>
+            </div>
+            <p id="errorMessage" class="alert-msg"></p>
+            <pre id="errorSnippet" class="alert-code"></pre>
+          </div>
+
+          <!-- Output Interleaved Panel -->
+          <div id="outputSection" class="output-card hidden">
+            <div class="output-header">
+              <div class="output-info">
+                <span class="output-title">Organized Code Output</span>
+                <span id="outputLangBadge" class="output-lang-badge">Python</span>
+              </div>
+              <div class="output-actions">
+                <button class="btn-action" onclick="copyOutput()">Copy Code</button>
+                <button class="btn-action" onclick="downloadOutput()">Download File</button>
+              </div>
+            </div>
+
+            <pre class="code-preview"><code id="formattedCodeDisplay"></code></pre>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ======================================================================
+       MODALS & OVERLAYS
+       ====================================================================== -->
+
+  <!-- Safe Fix Review Modal (Side-by-Side Diff & Reversible Confirmation) -->
+  <div id="safeFixModal" class="modal-overlay hidden">
+    <div class="modal-card wide-modal">
+      <div class="modal-top-bar">
+        <div class="modal-title-group">
+          <span class="modal-tag">Safe Review-Before-Apply Workflow</span>
+          <h3 id="fixModalTitle" class="modal-heading">Fix: Replace == None with is None</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeSafeFixModal()">&times;</button>
+      </div>
+
+      <p id="fixModalExplanation" class="modal-subtext">
+        In Python, identity comparison with <code>is None</code> is faster and avoids evaluating custom <code>__eq__</code> overrides.
+      </p>
+
+      <div class="diff-viewer-grid">
+        <div class="diff-column">
+          <span class="diff-header original-header">Original Code (<span id="diffOriginalLineRange">Line 14</span>)</span>
+          <pre id="diffOriginalCode" class="diff-pane original-pane"></pre>
+        </div>
+        <div class="diff-column">
+          <span class="diff-header proposed-header">Proposed Safe Fix</span>
+          <pre id="diffProposedCode" class="diff-pane proposed-pane"></pre>
+        </div>
+      </div>
+
+      <div class="fix-modal-footer">
+        <div class="backup-note">
+          ✓ Changes are <strong>fully reversible</strong>. A recoverable backup snapshot will be recorded.
+        </div>
+        <div class="modal-btn-row">
+          <button class="btn-subtle" onclick="rejectFixProposal()">Reject Fix</button>
+          <button class="btn-primary" onclick="applyVerifiedFix()">Accept & Apply Fix</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependency Graph / Cross-File Import Modal -->
+  <div id="depGraphModal" class="modal-overlay hidden">
+    <div class="modal-card wide-modal" style="max-width: 940px;">
+      <div class="modal-top-bar">
+        <div class="modal-title-group">
+          <span class="modal-tag">Interactive Architecture Inspector</span>
+          <h3 class="modal-heading">Cross-File Dependencies & Imports</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeDepGraphModal()">&times;</button>
+      </div>
+      <p class="modal-subtext">
+        Click any module to inspect inward/outward import references, detect broken import paths, and view circular dependency chains.
+      </p>
+
+      <div class="dep-inspector-grid">
+        <div class="dep-module-list" id="depModuleListContainer"></div>
+        <div class="dep-detail-pane" id="depDetailPane">
+          <div style="color:var(--text-muted); padding: 50px 20px; text-align: center;">
+            Select a module on the left to inspect its dependency relationships.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn-primary" onclick="closeDepGraphModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scan Comparison & History Insights Modal -->
+  <div id="scanCompareModal" class="modal-overlay hidden">
+    <div class="modal-card wide-modal" style="max-width: 860px;">
+      <div class="modal-top-bar">
+        <div class="modal-title-group">
+          <span class="modal-tag">Scan History & Delta Insights</span>
+          <h3 class="modal-heading">Compare Consecutive Scans</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeScanCompareModal()">&times;</button>
+      </div>
+      <p class="modal-subtext">
+        Analyze health score changes, newly introduced issues, resolved problems, and file defect density hotspots over time.
+      </p>
+
+      <div id="scanCompareContent"></div>
+
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn-primary" onclick="closeScanCompareModal()">Close Comparison</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plugin Readiness Checklist Modal -->
+  <div id="pluginChecklistModal" class="modal-overlay hidden">
+    <div class="modal-card wide-modal" style="max-width: 820px;">
+      <div class="modal-top-bar">
+        <div class="modal-title-group">
+          <span class="modal-tag">Integration Spec</span>
+          <h3 class="modal-heading">Plugin Readiness Checklist (8/8)</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closePluginChecklistModal()">&times;</button>
+      </div>
+      <p class="modal-subtext">
+        Auditing safety, non-destructive file operations, secret masking, and communication architecture before IDE / ChatGPT plugin packaging.
+      </p>
+
+      <div class="checklist-grid" id="pluginChecklistItems"></div>
+
+      <div class="arch-guide-box">
+        <strong>Integration Model Architectural Guide:</strong><br/>
+        • <strong>ChatGPT Plugin / Custom GPT Action:</strong> Exposes OpenAPI 3.0 schema against <code>server.py</code> endpoints with Bearer authentication and zero raw file exposure.<br/>
+        • <strong>VS Code Extension:</strong> Runs analysis directly via Language Server Protocol (LSP) webview, providing in-editor squiggly diagnostics and QuickFix code actions without external server dependency.
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn-primary" onclick="closePluginChecklistModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoring Formula Transparent Modal -->
+  <div id="scoreFormulaModal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-top-bar">
+        <div class="modal-title-group">
+          <span class="modal-tag">Math & Methodology</span>
+          <h3 class="modal-heading">Transparent Health Scoring Method</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeScoreFormulaModal()">&times;</button>
+      </div>
+
+      <p class="modal-subtext">
+        Codebase Doctor avoids invented or arbitrary numerical scores. The health score is calculated transparently from verified findings:
+      </p>
+
+      <div class="formula-box">
+        <code>Score = Math.max(0, Math.min(100, Math.round(100 - Penalty / Normalizer)))</code>
+      </div>
+
+      <div id="scoreFormulaDynamicBreakdown" style="margin: 12px 0; padding: 12px; background: var(--bg-subtle); border-radius: 4px; border: 1px solid var(--border-light); font-size: 13px;">
+        Calculating current project score breakdown...
+      </div>
+
+      <ul class="formula-deduction-list">
+        <li><strong>Critical Severity</strong>: -15 penalty points (security flaws, syntax breaks, eval).</li>
+        <li><strong>High Severity</strong>: -8 penalty points (mutable defaults, bare except, broken imports).</li>
+        <li><strong>Medium Severity</strong>: -3 penalty points (duplicate blocks, high complexity &gt;8, excessive nesting &ge;5).</li>
+        <li><strong>Low Severity</strong>: -1 penalty point (missing docstrings, leftover debug logs).</li>
+        <li><strong>Normalizer</strong>: <code>Math.max(1, TotalFiles * 0.4)</code> scales deductions fairly for larger repositories.</li>
+      </ul>
+
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; border-top: 1px solid var(--border-light); padding-top: 8px;">
+        <strong>Notice on Clean Scores:</strong> A score of 100/100 indicates zero violations detected across all active 28 static analysis rules. It does not imply code is mathematically proven bug-free.
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="closeScoreFormulaModal()">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Snippet Cleaner Language Confirmation Modal (Preserved) -->
+  <div id="confirmOverlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-heading">Confirm Language Identification</h3>
+      <p class="modal-subtext">Before proceeding with code organization, confirm if the detected language is correct:</p>
+
+      <div class="detected-box">
+        <span class="detected-label">Detected Language:</span>
+        <span id="detectedLangName" class="detected-val">JavaScript</span>
+      </div>
+
+      <div class="select-group">
+        <label for="langSelect" class="select-label">Or select alternate language:</label>
+        <select id="langSelect" class="custom-select">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript / TypeScript</option>
+          <option value="java">Java</option>
+          <option value="cpp">C / C++</option>
+          <option value="csharp">C#</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+          <option value="json">JSON</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-subtle" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn-primary" onclick="proceedWithFormatting()">Proceed to Clean</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Toast -->
+  <div id="toast" class="toast hidden">Notice</div>
+
+  <script src="app.js"></script>
+</body>
+</html>

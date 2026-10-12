@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: code-organizer-codebase-doctor-mcp
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: MCP_BEARER_TOKEN
+        generateValue: true
